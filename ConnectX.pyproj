@@ -11,6 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>ConnectX</Name>
     <RootNamespace>ConnectX</RootNamespace>
+    <InterpreterId>MSBuild|env_ConnectX|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +23,29 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConnectX.py" />
+    <Compile Include="agents.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="agent.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="training.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="env_ConnectX\">
+      <Id>env_ConnectX</Id>
+      <Version>3.8</Version>
+      <Description>env_ConnectX (Python 3.8 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

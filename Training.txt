@@ -1,0 +1,11 @@
+512-Net
+-------
+50.000 Random
+50.000 Random
+50.000 Lookahead
+10.000 Random
+--> Problem: doesn't know invalid moves
+40.000 Random
+10.000 Lookahead
+40.000 Lookahead
+50.000 Lookahead
