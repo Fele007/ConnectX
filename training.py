@@ -3,6 +3,7 @@ from kaggle_environments import make, evaluate
 from gym import spaces
 import numpy as np
 import torch as th
+from gym import Env
 
 def get_win_percentages(agent1, agent2, n_rounds=100):
     # Use default Connect Four setup
@@ -16,7 +17,7 @@ def get_win_percentages(agent1, agent2, n_rounds=100):
     print("Number of Invalid Plays by Agent 1:", outcomes.count([None, 0]))
     print("Number of Invalid Plays by Agent 2:", outcomes.count([0, None]))
 
-class ConnectFourGym:
+class ConnectFourGym(Env):
     def __init__(self, agent2="random"):
         ks_env = make("connectx", debug=True)
         self.env = ks_env.train([None, agent2])
@@ -25,7 +26,7 @@ class ConnectFourGym:
         # Learn about spaces here: http://gym.openai.com/docs/#spaces
         self.action_space = spaces.Discrete(self.columns)
         self.observation_space = spaces.Box(low=0, high=2, 
-                                            shape=(self.rows,self.columns,1), dtype=np.int)
+                                            shape=(1, self.rows,self.columns), dtype=np.int)
         # Tuple corresponding to the min and max possible rewards
         self.reward_range = (-10, 1)
         # StableBaselines throws error if these are not defined
@@ -33,14 +34,14 @@ class ConnectFourGym:
         self.metadata = None
     def reset(self):
         self.obs = self.env.reset()
-        return np.array(self.obs['board']).reshape(self.rows,self.columns,1)
+        return np.array(self.obs['board']).reshape(1, self.rows,self.columns)
     def change_reward(self, old_reward, done):
         if old_reward == 1: # The agent won the game
             return 1
         elif done: # The opponent won the game
             return -1
         else: # Reward 1/42
-            return -1/(self.rows*self.columns)
+            return 1/(self.rows*self.columns)
     def step(self, action):
         # Check if agent's move is valid
         is_valid = (self.obs['board'][int(action)] == 0)
@@ -49,20 +50,4 @@ class ConnectFourGym:
             reward = self.change_reward(old_reward, done)
         else: # End the game and penalize agent
             reward, done, _ = -10, True, {}
-        return np.array(self.obs['board']).reshape(self.rows,self.columns,1), reward, done, _
-
-
- 
-#    # Neural network for predicting action values
-#def modified_cnn(scaled_images, **kwargs):
-#    activ = tf.nn.relu
-#    layer_1 = activ(conv(scaled_images, 'c1', n_filters=32, filter_size=3, stride=1, 
-#                         init_scale=np.sqrt(2), **kwargs))
-#    layer_2 = activ(conv(layer_1, 'c2', n_filters=64, filter_size=3, stride=1, 
-#                         init_scale=np.sqrt(2), **kwargs))
-#    layer_2 = conv_to_fc(layer_2)
-#    return activ(linear(layer_2, 'fc1', n_hidden=512, init_scale=np.sqrt(2)))  
-
-#class CustomCnnPolicy(CnnPolicy):
-#    def __init__(self, *args, **kwargs):
-#        super(CustomCnnPolicy, self).__init__(*args, **kwargs, features_extractor=modified_cnn) # TODO: check if cnn_extractor -> features_extractor
+        return np.array(self.obs['board']).reshape(1,self.rows,self.columns), reward, done, _

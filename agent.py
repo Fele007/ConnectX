@@ -1,11 +1,51 @@
-import os
+import os, gym, datetime
 import torch as th
 import pandas as pd
 import matplotlib.pyplot as plt
+from torch import nn
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env.dummy_vec_env import DummyVecEnv
 from stable_baselines3 import PPO
-from stable_baselines3.common.policies import NatureCNN
+from stable_baselines3 import A2C
+from stable_baselines3.common.policies import ActorCriticCnnPolicy
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+
+
+# Neural network for predicting action values
+class CustomCNN(BaseFeaturesExtractor):
+    """
+    :param observation_space: (gym.Space)
+    :param features_dim: (int) Number of features extracted.
+        This corresponds to the number of unit for the last layer.
+    """
+
+    def __init__(self, observation_space: gym.spaces.Box, features_dim: int = 256):
+        super(CustomCNN, self).__init__(observation_space, features_dim)
+        # We assume CxHxW images (channels first)
+        # Re-ordering will be done by pre-preprocessing or wrapper
+        n_input_channels = observation_space.shape[0]
+        self.cnn = nn.Sequential(
+            nn.Conv2d(n_input_channels, 32, kernel_size=4, stride=1, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=2, stride=1, padding=0),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+
+        # Compute shape by doing one forward pass
+        with th.no_grad():
+            n_flatten = self.cnn(
+                th.as_tensor(observation_space.sample()[None]).float()
+            ).shape[1]
+
+        self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        return self.linear(self.cnn(observations))
+
+class CustomCnnPolicy(ActorCriticCnnPolicy):
+    def __init__(self, *args, **kwargs):
+        super(CustomCnnPolicy, self).__init__(*args, **kwargs, normalize_images = False)
 
 class Agent(object):
 
@@ -13,14 +53,13 @@ class Agent(object):
         if model:
             self.model = model
         else:
-            self.log_dir = "ppo/"
+            self.log_dir = "ppo_cnn/" + str(datetime.datetime.now()).replace(":", "-")
             os.makedirs(self.log_dir, exist_ok=True)
             monitor_env = Monitor(env, self.log_dir, allow_early_resets=True)
             vec_env = DummyVecEnv([lambda: monitor_env])
-            policy_kwargs = dict(activation_fn=th.nn.ReLU#,
-                         #net_arch=[dict(pi=[512, 512, 512], vf=[512, 512, 512])]
-                         )
-            self.model=PPO('CnnPolicy', vec_env, policy_kwargs=policy_kwargs, verbose=1, batch_size = 1024, learning_rate = 0.001, gamma = 0.97)
+            policy_kwargs = dict(features_extractor_class=CustomCNN,
+                                    features_extractor_kwargs=dict(features_dim=256), net_arch=[dict(pi=[64, 64], vf=[64, 64])])
+            self.model=PPO(CustomCnnPolicy, vec_env, policy_kwargs=policy_kwargs, verbose=1, learning_rate = 0.001)
 
     def function(self, obs, conf):
         import random
@@ -38,13 +77,10 @@ class Agent(object):
         self.model.save(name)
 
     def load(self, name : str, env, replace_parameters = None):
-        self.log_dir = "ppo/"
+        self.log_dir = "ppo_cnn/" + str(datetime.datetime.now()).replace(":", "-")
         os.makedirs(self.log_dir, exist_ok=True)
         monitor_env = Monitor(env, self.log_dir, allow_early_resets=True)
         vec_env = DummyVecEnv([lambda: monitor_env])
-        policy_kwargs = dict(activation_fn=th.nn.ReLU#,
-                        #net_arch=[dict(pi=[512, 512, 512], vf=[512, 512, 512])]
-                        )
         self.model = PPO.load(name, env=vec_env, custom_objects = replace_parameters)
 
     def plot(self):
