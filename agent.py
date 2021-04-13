@@ -6,12 +6,9 @@ from torch import nn
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env.dummy_vec_env import DummyVecEnv
 from stable_baselines3 import PPO
-from stable_baselines3 import A2C
 from stable_baselines3.common.policies import ActorCriticCnnPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-
-# Neural network for predicting action values
 class CustomCNN(BaseFeaturesExtractor):
     """
     :param observation_space: (gym.Space)

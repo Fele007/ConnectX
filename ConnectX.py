@@ -7,18 +7,14 @@ from training import ConnectFourGym, get_win_percentages
 from agent import Agent, lookahead_agent
 from stable_baselines3.common.env_checker import check_env
 
-import torch as th
-
-
-if __name__ == "__main__":
-
+def train_model():
     env = ConnectFourGym(agent2=lookahead_agent)
     #check_env(env, warn=True, skip_render_check=True)
-    agent = Agent(env)
-    policy_dir = 'ppo_cnn/'
-    #agent.load(policy_dir + 'ppo_cnn-250000', env, {'learning_rate':0.0002, 'device':'cpu'})
-    agent.train(timesteps=1000)
-    #agent.save(policy_dir + 'ppo_cnn-251000')
+    agent = Agent(env, 'None')
+    policy_dir = 'C:/Repos/ConnectX/ppo_cnn/'
+    agent.load(policy_dir + 'ppo_cnn-300000', env, {'learning_rate':0.0001}) #250000 is baseline before learning rate increase
+    agent.train(timesteps=50000)
+    agent.save(policy_dir + 'ppo_cnn-350000')
     
 
     def function(obs, conf):
@@ -32,4 +28,11 @@ if __name__ == "__main__":
 
     get_win_percentages(lookahead_agent, function, n_rounds=100)
     agent.plot()
+
+if __name__ == "__main__":
+    train_model()
+    
+
+
+    
 
