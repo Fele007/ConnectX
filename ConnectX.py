@@ -15,9 +15,10 @@ if __name__ == "__main__":
     env = ConnectFourGym(agent2=lookahead_agent)
     #check_env(env, warn=True, skip_render_check=True)
     agent = Agent(env)
-    agent.load('ppo_cnn-150000', env, {'learning_rate':0.0005})
-    agent.train(timesteps=50000)
-    agent.save('ppo_cnn-200000')
+    policy_dir = 'ppo_cnn/'
+    #agent.load(policy_dir + 'ppo_cnn-250000', env, {'learning_rate':0.0002, 'device':'cpu'})
+    agent.train(timesteps=1000)
+    #agent.save(policy_dir + 'ppo_cnn-251000')
     
 
     def function(obs, conf):

@@ -340,3 +340,5 @@ ASALocalRun/
 healthchecksdb
 /env_ConnectX
 *.zip
+/env_ConnectX_37
+*.csv
